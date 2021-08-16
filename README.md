@@ -14,6 +14,8 @@ Additionally, it can optionally fetch or pull from the remote prior to getting t
 
 Each of these features can be optionally disabled with an input variable (each one defaults to being enabled) if you want to disable a feature that may not work for your particular use case or if you want to speed up the module (on Windows it can be slow).
 
+**Note:** During a `terraform import`, this module will return null values. This is due to the fact that Terraform returns an empty string for external data sources during import, and does not actually run the data source.
+
 Usage:
 
 ```
