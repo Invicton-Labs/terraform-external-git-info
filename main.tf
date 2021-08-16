@@ -5,7 +5,7 @@ terraform {
 // Ensure that Git is installed
 module "git_exists" {
   source                  = "Invicton-Labs/command-exists/external"
-  version                 = "0.1.2"
+  version                 = "0.1.3"
   command_unix            = "git"
   working_dir             = var.working_dir
   fail_if_command_missing = true
@@ -17,8 +17,8 @@ module "is_git_repo" {
   depends_on = [
     module.git_exists.exists
   ]
-  command_unix    = module.git_exists.exists ? "git rev-parse --git-dir >/dev/null 2>&1; echo $?" : null
-  command_windows = module.git_exists.exists ? "git rev-parse --git-dir > $null 2>&1; Write-Output $LASTEXITCODE" : null
+  command_unix    = module.git_exists.exists == null ? null : (module.git_exists.exists ? "git rev-parse --git-dir >/dev/null 2>&1; echo $?" : null)
+  command_windows = module.git_exists.exists == null ? null : (module.git_exists.exists ? "git rev-parse --git-dir > $null 2>&1; Write-Output $LASTEXITCODE" : null)
   working_dir     = var.working_dir != null ? var.working_dir : path.root
   fail_on_error   = true
 }
