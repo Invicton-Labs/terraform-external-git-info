@@ -5,7 +5,7 @@ terraform {
 // Ensure that Git is installed
 module "git_exists" {
   source                  = "Invicton-Labs/command-exists/external"
-  version                 = "0.1.3"
+  version                 = "~> 0.1.3"
   command_unix            = "git"
   working_dir             = var.working_dir
   fail_if_command_missing = true
@@ -13,7 +13,7 @@ module "git_exists" {
 
 module "is_git_repo" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   depends_on = [
     module.git_exists.exists
   ]
@@ -30,7 +30,7 @@ locals {
 
 module "git_fetch_pull" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && (var.pull || var.fetch) ? 1 : 0
   depends_on = [
     local.is_git
@@ -46,7 +46,7 @@ locals {
 
 module "git_branch" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_current_branch ? 1 : 0
   depends_on = [
     local.fetch_pull_done
@@ -62,7 +62,7 @@ locals {
 
 module "git_branches_local" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_local_branches ? 1 : 0
   depends_on = [
     local.fetch_pull_done
@@ -73,7 +73,7 @@ module "git_branches_local" {
 }
 module "git_branches_remote" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_remote_branches ? 1 : 0
   depends_on = [
     local.fetch_pull_done
@@ -108,7 +108,7 @@ locals {
 
 module "git_hash" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_commit_hash ? 1 : 0
   depends_on = [
     local.fetch_pull_done
@@ -125,7 +125,7 @@ locals {
 
 module "git_current_tag" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_current_tag ? 1 : 0
   depends_on = [
     local.fetch_pull_done
@@ -139,7 +139,7 @@ module "git_current_tag" {
 // If the git_current_tag module failed, ensure it was an acceptable error code (1), which means there are no tags
 module "git_current_tag_acceptable_exitstatus" {
   source        = "Invicton-Labs/assertion/null"
-  version       = "0.2.1"
+  version       = "~> 0.2.1"
   count         = length(module.git_current_tag)
   error_message = module.git_current_tag[0].stderr
   condition     = module.git_current_tag[0].exitstatus <= 1
@@ -151,7 +151,7 @@ locals {
 
 module "git_tags" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_tags ? 1 : 0
   depends_on = [
     local.fetch_pull_done
@@ -165,7 +165,7 @@ module "git_tags" {
 // If the git_tags module failed, ensure it was an acceptable error code (1), which means there are no tags
 module "git_tags_acceptable_exitstatus" {
   source        = "Invicton-Labs/assertion/null"
-  version       = "0.2.1"
+  version       = "~> 0.2.1"
   count         = length(module.git_tags)
   error_message = module.git_tags[0].stderr
   condition     = module.git_tags[0].exitstatus <= 1
@@ -185,7 +185,7 @@ locals {
 
 module "git_remotes" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "0.2.1"
+  version = "~> 0.2.1"
   count   = local.is_git && var.get_remotes ? 1 : 0
   depends_on = [
     local.fetch_pull_done
