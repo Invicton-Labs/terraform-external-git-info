@@ -40,8 +40,8 @@ variable "get_commit_hash" {
   default     = true
 }
 
-variable "get_current_tag" {
-  description = "Whether to get the currently checked out tag."
+variable "get_current_tags" {
+  description = "Whether to get the list of tags associated with the currently checked out commit."
   type        = bool
   default     = true
 }
