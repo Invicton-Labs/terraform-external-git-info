@@ -1,8 +1,12 @@
 locals {
+  // Each separator uses a UUID which, in theory, should be universally unique
+  // and shoule never appear in a command output
   command_separator = "__TF_SEPARATOR_a3a67b67efd6496f816b2c2489d409da"
   command_terminator = "__TF_SEPARATOR_b09cf9eeadda4e0e8ce634c64be5df9a"
   kv_separator = "__TF_SEPARATOR_97cf63bc81af4dc6942c69a6ccbc3dc2"
-  common_commands = [ for v in [
+
+  // Commands that are used on both Unix and Windows
+  commands_common = [
     var.pull ? [null, "git pull"] : (var.fetch ?  [null, "git fetch"] : null),
     var.get_current_branch ? ["current_branch", "git rev-parse --abbrev-ref HEAD"] : null,
     var.get_local_branches ? ["local_branches", "git branch --format='%(refname:short)' --no-color"] : null,
@@ -10,7 +14,7 @@ locals {
     var.get_commit_hash ? ["commit_hash", "git rev-parse HEAD"] : null,
     var.get_current_tags ? ["current_tags", "git tag --points-at HEAD"] : null,
     var.get_remotes ? ["remotes", "git remote -v"] : null,
-  ]: v if v != null]
+  ]
 
   commands_unix = [
     var.get_tags ? ["tags", "git show-ref --tags || (exitcode=$?; if [ $exitcode != 1 ]; then exit $exitcode; fi;)"] : null,
@@ -21,12 +25,12 @@ locals {
   ]
 
   unix_wrapped_commands = [
-    for command in concat(local.common_commands, local.commands_unix):
+    for command in [for v in concat(local.commands_common, local.commands_unix): v if v != null]:
     command[0] == null ? "${command[1]} >/dev/null 2>&1" : "echo -n \"${local.command_separator}${command[0]}${local.kv_separator}$(${command[1]})${local.command_terminator}\""
   ]
 
   windows_wrapped_commands = [
-    for command in concat(local.common_commands, local.commands_windows):
+    for command in [for v in concat(local.commands_common, local.commands_windows): v if v != null]:
     command[0] == null ? "${command[1]} >$null 2>&1" : "Write-Output \"${local.command_separator}${command[0]}${local.kv_separator}$($(${command[1]}) | Out-String)${local.command_terminator}\""
   ]
 
