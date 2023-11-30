@@ -70,7 +70,7 @@ EOF
 
 module "shell_script" {
   source  = "Invicton-Labs/shell-data/external"
-  version = "~> 0.3.1"
+  version = "~> 0.4.2"
   working_dir = var.working_dir != null ? var.working_dir : path.root
   command_unix = local.unix_script
   command_windows = local.windows_script
@@ -80,14 +80,14 @@ module "shell_script" {
 
 module "assert_git_available" {
   source  = "Invicton-Labs/assertion/null"
-  version = "~> 0.2.1"
+  version = "~> 0.2.4"
   condition = module.shell_script.exit_code != local.git_missing_exit_code
   error_message = "The `git` command is unavailable in this shell."
 }
 
 module "assert_valid_ext_code" {
   source  = "Invicton-Labs/assertion/null"
-  version = "~> 0.2.1"
+  version = "~> 0.2.4"
   depends_on = [
     module.assert_git_available
   ]
