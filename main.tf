@@ -1,13 +1,13 @@
 locals {
   // Each separator uses a UUID which, in theory, should be universally unique
   // and shoule never appear in a command output
-  command_separator = "__TF_SEPARATOR_a3a67b67efd6496f816b2c2489d409da"
+  command_separator  = "__TF_SEPARATOR_a3a67b67efd6496f816b2c2489d409da"
   command_terminator = "__TF_SEPARATOR_b09cf9eeadda4e0e8ce634c64be5df9a"
-  kv_separator = "__TF_SEPARATOR_97cf63bc81af4dc6942c69a6ccbc3dc2"
+  kv_separator       = "__TF_SEPARATOR_97cf63bc81af4dc6942c69a6ccbc3dc2"
 
   // Commands that are used on both Unix and Windows
   commands_common = [
-    var.pull ? [null, "git pull"] : (var.fetch ?  [null, "git fetch"] : null),
+    var.pull ? [null, "git pull"] : (var.fetch ? [null, "git fetch"] : null),
     var.get_current_branch ? ["current_branch", "git rev-parse --abbrev-ref HEAD"] : null,
     var.get_local_branches ? ["local_branches", "git branch --format='%(refname:short)' --no-color"] : null,
     var.get_remote_branches ? ["remote_branches", "git branch --no-color --remote"] : null,
@@ -25,12 +25,12 @@ locals {
   ]
 
   unix_wrapped_commands = [
-    for command in [for v in concat(local.commands_common, local.commands_unix): v if v != null]:
+    for command in [for v in concat(local.commands_common, local.commands_unix) : v if v != null] :
     command[0] == null ? "${command[1]} >/dev/null 2>&1" : "echo -n \"${local.command_separator}${command[0]}${local.kv_separator}$(${command[1]})${local.command_terminator}\""
   ]
 
   windows_wrapped_commands = [
-    for command in [for v in concat(local.commands_common, local.commands_windows): v if v != null]:
+    for command in [for v in concat(local.commands_common, local.commands_windows) : v if v != null] :
     command[0] == null ? "${command[1]} >$null 2>&1" : "Write-Output \"${local.command_separator}${command[0]}${local.kv_separator}$($(${command[1]}) | Out-String)${local.command_terminator}\""
   ]
 
@@ -40,7 +40,7 @@ locals {
   unix_script = <<EOF
 set -e
 
-if ! command -v git &> /dev/null; then exit ${local.git_missing_exit_code}; fi
+if ! command -v git >/dev/null 2>&1; then exit ${local.git_missing_exit_code}; fi
 
 set +e
 git rev-parse --git-dir >/dev/null 2>&1
@@ -69,19 +69,19 @@ EOF
 }
 
 module "shell_script" {
-  source  = "Invicton-Labs/shell-data/external"
-  version = "~> 0.4.2"
-  working_dir = var.working_dir != null ? var.working_dir : path.root
-  command_unix = local.unix_script
-  command_windows = local.windows_script
+  source                    = "Invicton-Labs/shell-data/external"
+  version                   = "~> 0.4.2"
+  working_dir               = var.working_dir != null ? var.working_dir : path.root
+  command_unix              = local.unix_script
+  command_windows           = local.windows_script
   fail_on_nonzero_exit_code = false
-  fail_on_stderr = true
+  fail_on_stderr            = true
 }
 
 module "assert_git_available" {
-  source  = "Invicton-Labs/assertion/null"
-  version = "~> 0.2.4"
-  condition = module.shell_script.exit_code != local.git_missing_exit_code
+  source        = "Invicton-Labs/assertion/null"
+  version       = "~> 0.2.4"
+  condition     = module.shell_script.exit_code != local.git_missing_exit_code
   error_message = "The `git` command is unavailable in this shell."
 }
 
@@ -91,19 +91,19 @@ module "assert_valid_ext_code" {
   depends_on = [
     module.assert_git_available
   ]
-  condition = contains([0, local.not_git_dir_exit_code], module.shell_script.exit_code)
+  condition     = contains([0, local.not_git_dir_exit_code], module.shell_script.exit_code)
   error_message = "Failed to load git data: ${module.shell_script.stderr}"
 }
 
 locals {
-  git_installed = module.assert_git_available.checked && module.assert_valid_ext_code.checked
+  git_installed    = module.assert_git_available.checked && module.assert_valid_ext_code.checked
   is_git_directory = local.git_installed ? module.shell_script.exit_code != local.not_git_dir_exit_code : null
 
-  segments = split(local.command_separator, module.shell_script.stdout)
+  segments           = split(local.command_separator, module.shell_script.stdout)
   command_kv_outputs = slice(local.segments, 1, length(local.segments))
 
   command_outputs = {
-    for output in local.command_kv_outputs:
+    for output in local.command_kv_outputs :
     replace(replace(trimspace(split(local.kv_separator, output)[0]), "\r", ""), "\r\n", "\n") => replace(replace(trimspace(split(local.command_terminator, split(local.kv_separator, output)[1])[0]), "\r", ""), "\r\n", "\n")
   }
 
@@ -118,37 +118,37 @@ locals {
   ]
 
   output_values = {
-    for k in local.output_keys:
+    for k in local.output_keys :
     k => local.git_installed && local.is_git_directory == true ? lookup(local.command_outputs, k, null) : null
   }
 
-  git_current_branch = local.output_values.current_branch
-  git_branches_local = local.output_values.local_branches != null ? [for r in split("\n", local.output_values.local_branches): trimspace(r) if length(trimspace(r)) > 0] : null
-  git_branches_remote = local.output_values.remote_branches != null ? [for r in split("\n", local.output_values.remote_branches): trimspace(r) if length(trimspace(r)) > 0 && length(split("->", r)) <= 1] : []
+  git_current_branch  = local.output_values.current_branch
+  git_branches_local  = local.output_values.local_branches != null ? [for r in split("\n", local.output_values.local_branches) : trimspace(r) if length(trimspace(r)) > 0] : null
+  git_branches_remote = local.output_values.remote_branches != null ? [for r in split("\n", local.output_values.remote_branches) : trimspace(r) if length(trimspace(r)) > 0 && length(split("->", r)) <= 1] : []
 
-  remote_branch_remotes = distinct([for b in local.git_branches_remote: split("/", b)[0]])
+  remote_branch_remotes = distinct([for b in local.git_branches_remote : split("/", b)[0]])
   git_branches_remote_by_origin = local.output_values.remote_branches != null ? {
-    for r in local.remote_branch_remotes:
+    for r in local.remote_branch_remotes :
     r => [
-      for b in local.git_branches_remote:
+      for b in local.git_branches_remote :
       trimprefix(b, "${r}/")
       if length(trimprefix(b, "${r}/")) != length(b)
     ]
   } : null
 
-  git_hash = local.output_values.commit_hash
-  git_hash_short = local.output_values.commit_hash != null ? substr(local.output_values.commit_hash, 0, 7) : null
-  git_current_tags = local.output_values.current_tags != null ? [for r in split("\n", local.output_values.current_tags): trimspace(r) if length(trimspace(r)) > 0] : null
+  git_hash         = local.output_values.commit_hash
+  git_hash_short   = local.output_values.commit_hash != null ? substr(local.output_values.commit_hash, 0, 7) : null
+  git_current_tags = local.output_values.current_tags != null ? [for r in split("\n", local.output_values.current_tags) : trimspace(r) if length(trimspace(r)) > 0] : null
 
-  git_tag_rows = local.output_values.tags != null ? [for r in split("\n", local.output_values.tags): trimspace(r) if length(trimspace(r)) > 0] : []
+  git_tag_rows = local.output_values.tags != null ? [for r in split("\n", local.output_values.tags) : trimspace(r) if length(trimspace(r)) > 0] : []
   git_tags = local.output_values.tags != null ? {
-    for r in local.git_tag_rows:
+    for r in local.git_tag_rows :
     trimspace(trimprefix(split(" ", r)[1], "refs/tags/")) => trimspace(split(" ", r)[0])
   } : null
 }
 
 locals {
-  git_remotes_rows = local.output_values.remotes != null ? [for r in split("\n", local.output_values.remotes): trimspace(r) if length(trimspace(r)) > 0] : []
+  git_remotes_rows = local.output_values.remotes != null ? [for r in split("\n", local.output_values.remotes) : trimspace(r) if length(trimspace(r)) > 0] : []
   git_remotes_row_parts = [
     for remote in local.git_remotes_rows :
     compact(split("\t", replace(remote, " ", "\t")))
