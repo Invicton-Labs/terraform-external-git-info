@@ -80,14 +80,14 @@ module "shell_script" {
 
 module "assert_git_available" {
   source        = "Invicton-Labs/assertion/null"
-  version       = "~> 0.2.4"
+  version       = "~> 0.2.7"
   condition     = module.shell_script.exit_code != local.git_missing_exit_code
   error_message = "The `git` command is unavailable in this shell."
 }
 
 module "assert_valid_ext_code" {
   source  = "Invicton-Labs/assertion/null"
-  version = "~> 0.2.4"
+  version = "~> 0.2.7"
   depends_on = [
     module.assert_git_available
   ]
